@@ -7,7 +7,12 @@ var r3 =[];
 var brick;
 var rbrick = [];
 var lbrick =[];
-var flag =1;
+var flag =0;
+var player;
+var point;
+var coins =[];
+var grayScale =0;
+//generate_coins();
 main();
 var eyex,eyey,eyez,tx,ty,tz;
 eyex = -4.5;
@@ -64,6 +69,10 @@ function check(e) {
     }
 }
 function main() {
+  eyex = -4.5;
+eyey=1.5;
+eyez=0;
+tx =ty=tz=0;
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   window.addEventListener('keydown',this.check,false);
@@ -77,6 +86,11 @@ function main() {
     rbrick[i] = new wall(gl,[-2.5+4*i,0.1,1.75],2,2,0.0);
     lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-1.75],2,2,0.0);
   }
+  for(var i=0;i<20;i++){
+    console.log(eyex);
+    coins[i] = new coin(gl,[tx+0.5*i,0.2,-1.1],0.1);
+  }
+  point = new coin(gl,[0,1,0],0.1);
   //brick = new wall(gl,[-2.5,0.1,1.75],1.5,1.5,0.0);
     
   // If we don't have a GL context, give up now
@@ -104,18 +118,45 @@ function main() {
   `;
 
   // Fragment shader program
+  const fsSourceNormal = `
+  precision mediump float;
+  varying highp vec2 vTextureCoord;
+  
+  uniform sampler2D uSampler;
+  uniform int uGrey;
+  uniform int uFlash;
+  
+  void main(void) {
+    vec4 tex =  texture2D(uSampler, vTextureCoord);
+    float sum = (tex.x+tex.y+tex.z)/3.0;
+    vec4 gray = vec4(sum,sum,sum,1);
+      gl_FragColor = tex;
+  }
+`;
+const fsSourceGray = `
+precision mediump float;
+varying highp vec2 vTextureCoord;
 
-  const fsSource = `
-    varying highp vec2 vTextureCoord;
+uniform sampler2D uSampler;
+uniform int uGrey;
+uniform int uFlash;
 
-    uniform sampler2D uSampler;
-
-    void main(void) {
-      
-      gl_FragColor = texture2D(uSampler, vTextureCoord);
-    }
-  `;
-
+void main(void) {
+  vec4 tex =  texture2D(uSampler, vTextureCoord);
+  float sum = (tex.x+tex.y+tex.z)/3.0;
+  vec4 gray = vec4(sum,sum,sum,1);
+    gl_FragColor = gray;
+}
+`;
+var fsSource;
+if(grayScale){
+  fsSource = fsSourceGray;  
+}  
+else{
+  fsSource = fsSourceNormal;
+}
+  
+  
   // Initialize a shader program; this is where all the lighting
   // for the vertices and so forth is established.
   const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
@@ -141,9 +182,10 @@ function main() {
   // objects we'll be drawing.
   
   var texture =[];
-  texture[1] = loadTexture(gl, 'base.jpg');
-  texture[2] = loadTexture(gl,'new_track.jpg');
-  texture[3] = loadTexture(gl, 'BrickWall.jpg');
+  texture['base'] = loadTexture(gl, 'base.jpg');
+  texture['rails'] = loadTexture(gl,'new_track.jpg');
+  texture['wall'] = loadTexture(gl, 'BrickWall.jpg');
+  texture['coin'] = loadTexture(gl, 'yellow.jpg');
 
   var then = 0;
 
@@ -207,7 +249,6 @@ function drawScene(gl, programInfo,texture,deltaTime) {
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
-  const modelViewMatrix = mat4.create();
   var cameraMatrix = mat4.create();
   //mat4.tanslate(outout,input,value)
   mat4.translate(cameraMatrix, cameraMatrix, [eyex, eyey, eyez]);
@@ -224,27 +265,19 @@ function drawScene(gl, programInfo,texture,deltaTime) {
   var viewProjectionMatrix = mat4.create();
 
 mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
 
-//   mat4.translate(modelViewMatrix,     // destination matrix
-//                  modelViewMatrix,     // matrix to translate
-//                  [2.0, 0.0, -10.0]);  // amount to translate
-//   mat4.rotate(modelViewMatrix,  // destination matrix
-//               modelViewMatrix,  // matrix to rotate
-//               cubeRotation,     // amount to rotate in radians
-//               [0, 0, 1]);       // axis to rotate around (axis)
-  b.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[1]);
-  //rail1.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
-  for(var i=0;i<1000;i++){
-    r1[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
-    r2[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
-    r3[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
-    rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[3]);
-    lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[3]);
-  }
+  b.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['base']);
+  // for(var i=0;i<1000;i++){
+  //   r1[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+  //   r2[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+  //   r3[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+  //   rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
+  //   lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
+  // }
+  // for(var i=0;i<20;i++){
+  //   coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
+  // }
   
-
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
   
