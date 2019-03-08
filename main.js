@@ -1,9 +1,17 @@
 var cubeRotation = 0.0;
 var b;
+var rail1;
+var r1 = [];
+var r2 =[];
+var r3 =[];
+var brick;
+var rbrick = [];
+var lbrick =[];
+var flag =1;
 main();
 var eyex,eyey,eyez,tx,ty,tz;
-eyex = -5;
-eyey=2;
+eyex = -4.5;
+eyey=1.5;
 eyez=0;
 tx =ty=tz=0;
 //
@@ -31,10 +39,26 @@ function check(e) {
                 eyey -= 0.1;
                 console.log(eyex,eyey,eyez);
                 break; //Down key
-        case 80: eyex = 5;
+        case 81: eyex = -5;
                 eyey =2;
                 eyez=0;
-                break;
+                break;//Q key
+        case 75:  
+                eyez -= 0.1;
+                console.log(eyex,eyey,eyez);
+                break; //k key
+        case 76:  
+                eyez += 0.1;
+                console.log(eyex,eyey,eyez);
+                break; //l key
+        case 88: 
+              flag=1;
+              console.log('move');
+              break;
+        case 90:
+              flag =0;
+              console.log('stop');
+              break;
         default: console.log(code); //Everything else
         
     }
@@ -45,7 +69,15 @@ function main() {
   window.addEventListener('keydown',this.check,false);
 
         
-  b = new base(gl,[0,0,0],100,0.25  ,3);
+  b = new base(gl,[0,0,0],100,0.0,1.75);
+  for(var i=0;i<1000;i++){
+    r1[i] = new rec(gl,[-2.5+0.5*i,0.1,-1.1],0.5,0,0.5);
+    r2[i] = new rec(gl,[-2.5+0.5*i,0.1, 0.0],0.5,0,0.5);
+    r3[i] = new rec(gl,[-2.5+0.5*i,0.1, 1.1],0.5,0,0.5);
+    rbrick[i] = new wall(gl,[-2.5+4*i,0.1,1.75],2,2,0.0);
+    lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-1.75],2,2,0.0);
+  }
+  //brick = new wall(gl,[-2.5,0.1,1.75],1.5,1.5,0.0);
     
   // If we don't have a GL context, give up now
 
@@ -79,6 +111,7 @@ function main() {
     uniform sampler2D uSampler;
 
     void main(void) {
+      
       gl_FragColor = texture2D(uSampler, vTextureCoord);
     }
   `;
@@ -107,8 +140,10 @@ function main() {
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
   
-
-  const texture = loadTexture(gl, 'base.jpg');
+  var texture =[];
+  texture[1] = loadTexture(gl, 'base.jpg');
+  texture[2] = loadTexture(gl,'new_track.jpg');
+  texture[3] = loadTexture(gl, 'BrickWall.jpg');
 
   var then = 0;
 
@@ -117,7 +152,11 @@ function main() {
     now *= 0.001;  // convert to seconds
     const deltaTime = now - then;
     then = now;
-
+    if(flag){
+      eyex +=0.1;
+    tx += 0.1;
+    
+    }
     drawScene(gl, programInfo,texture, deltaTime);
 
     requestAnimationFrame(render);
@@ -135,7 +174,7 @@ function main() {
 //
 // Draw the scene.
 //
-function drawScene(gl, programInfo,texture, deltaTime) {
+function drawScene(gl, programInfo,texture,deltaTime) {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
   gl.clearDepth(1.0);                 // Clear everything
   gl.enable(gl.DEPTH_TEST);           // Enable depth testing
@@ -195,7 +234,16 @@ mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
 //               modelViewMatrix,  // matrix to rotate
 //               cubeRotation,     // amount to rotate in radians
 //               [0, 0, 1]);       // axis to rotate around (axis)
-  b.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture);
+  b.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[1]);
+  //rail1.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
+  for(var i=0;i<1000;i++){
+    r1[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
+    r2[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
+    r3[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[2]);
+    rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[3]);
+    lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture[3]);
+  }
+  
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
