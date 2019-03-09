@@ -31,7 +31,7 @@ let human = class{
     }
     moveUp(){
         if(this.position[1]==this.base){
-            this.position[1]+= 0.5;
+            this.position[1]+= 0.65;
         }
         this.setPosition();
     }

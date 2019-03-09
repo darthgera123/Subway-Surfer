@@ -1,8 +1,29 @@
-let barricade = class {
+let train = class {
     constructor(gl, pos, height, width, depth) {
         this.positionBuffer = gl.createBuffer();
+        this.angle=0;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
+            // Front face
+            -height, -width, depth,
+            height, -width, depth,
+            height, width, depth,
+            -height, width, depth,
+            //Back Face
+            -height, -width, -depth,
+            height, -width, -depth,
+            height, width, -depth,
+            -height, width, -depth,
+            //Top Face
+            -height, width, -depth,
+            height, width, -depth,
+            height, width, depth,
+            -height, width, depth,
+            //Bottom Face
+            -height, -width, -depth,
+            height, -width, -depth,
+            height, -width, depth,
+            -height, -width, depth,
             //Left Face
             -height, -width, -depth,
             -height, width, -depth,
@@ -16,22 +37,38 @@ let barricade = class {
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positions), gl.STATIC_DRAW);
         this.pos = pos;
-        // Now set up the texture coordinates for the faces.    
-        
-
   // Now set up the texture coordinates for the faces.
 
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
   const textureCoordinates = [
-   
     // Front
     0.0,  0.0,
     1.0,  0.0,
     1.0,  1.0,
     0.0,  1.0,
     // Back
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Top
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Bottom
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Right
+    0.0,  0.0,
+    1.0,  0.0,
+    1.0,  1.0,
+    0.0,  1.0,
+    // Left
     0.0,  0.0,
     1.0,  0.0,
     1.0,  1.0,
@@ -79,6 +116,12 @@ let barricade = class {
             modelViewMatrix,
             this.pos
         );
+        var PI = 3.14159265359;
+        this.angle = this.angle*PI/180;
+        mat4.rotate(modelViewMatrix,  // destination matrix
+            modelViewMatrix,  // matrix to rotate
+            this.angle,     // amount to rotate in radians
+            [0, 0, 1]);       // axis to rotate around (axis)
         {
             const numComponents = 3;
             const type = gl.FLOAT;

@@ -12,7 +12,8 @@ var coins =[];
 var grayScale =0;
 var player,police;
 var fly=0;
-
+var barrier;
+var rajtrain;
 //generate_coins();
 main();
 var eyex,eyey,eyez,tx,ty,tz;
@@ -117,7 +118,9 @@ function main() {
   }
   player = new human(gl,[-2,0.2,0]);
   police = new human(gl,[-2,0.2,0]);
-    
+  //barrier = new barricade(gl,[1,0.5,1.1],0,0.2,0.5);
+  // barrier = new barricade(gl,[1,0.75,0],0,0.2,0.5);
+  rajtrain = new train(gl,[1,0.77,1.1],1,0.75,0.5);
   // If we don't have a GL context, give up now
 
   if (!gl) {
@@ -215,7 +218,9 @@ else{
   texture['body'] = loadTexture(gl, 'tbody.jpg');
   texture['leg'] = loadTexture(gl, 'leg.jpg');
   texture['police'] = loadTexture(gl, 'policebody.jpg');
-  texture['policeleg'] = loadTexture(gl, 'policeleg.jpg')
+  texture['policeleg'] = loadTexture(gl, 'policeleg.jpg');
+  texture['barricade'] = loadTexture(gl, 'barricade.jpg');
+  texture['train'] = loadTexture(gl, 'train.jpg');
   
   var then = 0;
 
@@ -312,10 +317,12 @@ mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
     rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
     lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
   }
-  // for(var i=0;i<20;i++){
-  //   coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
-  // }
+  for(var i=0;i<20;i++){
+    coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
+  }
   drawPlayer(player,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
+  // barrier.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['barricade']);
+  rajtrain.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['train']);
   //drawPlayer(police,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
   
   
