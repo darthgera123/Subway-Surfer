@@ -80,10 +80,13 @@ function check(e) {
             police.moveUp();
             break;//Space
         case 83:
+            player.duckP();
+            //player.moveDown();
+            break;//s
+        case 69:
             fly=0;
             player.reset();
-            player.moveDown();
-            break;//s
+            break;//E
         case 87:
             fly=1;
             player.fly();
@@ -112,7 +115,7 @@ function main() {
     console.log(eyex);
     coins[i] = new coin(gl,[tx+0.5*i,0.2,-1.1],0.1);
   }
-  player = new human(gl,[0,0.2,0]);
+  player = new human(gl,[-2,0.2,0]);
   police = new human(gl,[-2,0.2,0]);
     
   // If we don't have a GL context, give up now
@@ -228,6 +231,7 @@ else{
       police.moveAhead(0.1);
     }
     if(!fly){
+      
       player.moveDown();
       police.moveDown();
     }
@@ -311,15 +315,10 @@ mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
   // for(var i=0;i<20;i++){
   //   coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
   // }
-  player.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
-  player.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['body']);
-  player.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
-  player.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+  drawPlayer(player,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
+  //drawPlayer(police,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
   
-  police.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
-  police.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['police']);
-  police.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
-  police.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
+  
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
   
@@ -378,10 +377,17 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
-function drawPlayer(gl,viewProjectionMatrix,programInfo,deltaTime,texture){
-  player.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
-  player.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['body']);
-  player.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
-  player.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+function drawPlayer(human,gl,viewProjectionMatrix,programInfo,deltaTime,texture){
+  if(human == player){
+    human.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['body']);
+    human.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+    human.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+  }else{
+    human.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['police']);
+    human.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
+    human.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
+  }
+  human.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
+  
   
 }
