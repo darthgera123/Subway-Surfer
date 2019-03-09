@@ -12,8 +12,13 @@ var coins =[];
 var grayScale =0;
 var player,police;
 var fly=0;
-var barrier;
+var barrier =[];
+var barrierup =[];
 var rajtrain;
+var duck=0;
+var speed =0.2;
+var rest = 0;
+var rest_flag=0;
 //generate_coins();
 main();
 var eyex,eyey,eyez,tx,ty,tz;
@@ -56,6 +61,13 @@ function check(e) {
                 console.log(eyex,eyey,eyez);
                 break; //k key
         case 76:  
+                if(grayScale == 1){
+                  grayScale =0;
+                
+                }
+                else{
+                  grayScale =1;
+                }
                 eyez += 0.1;
                 console.log(eyex,eyey,eyez);
                 break; //l key
@@ -63,11 +75,14 @@ function check(e) {
               flag=1;
               console.log('move');
               
-              break;
+              break;//X
         case 90:
               flag =0;
+              console.log(player.position);
+              console.log(barrierup[0].pos);
+              console.log(player.score);
               console.log('stop');
-              break;
+              break;//Z
         case 65:
             player.moveLeft();
             police.moveLeft();
@@ -82,11 +97,13 @@ function check(e) {
             break;//Space
         case 83:
             player.duckP();
+            duck =1;
             //player.moveDown();
             break;//s
         case 69:
             fly=0;
             player.reset();
+            duck =0;
             break;//E
         case 87:
             fly=1;
@@ -104,22 +121,23 @@ function main() {
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
-  b = new base(gl,[0,0,0],100,0.0,1.75,0);
+  b = new base(gl,[0,0,0],100,0.0,2.5,0);
   for(var i=0;i<1000;i++){
     r1[i] = new rec(gl,[-2.5+0.5*i,0.1,-1.1],0.5,0,0.5);
     r2[i] = new rec(gl,[-2.5+0.5*i,0.1, 0.0],0.5,0,0.5);
     r3[i] = new rec(gl,[-2.5+0.5*i,0.1, 1.1],0.5,0,0.5);
-    rbrick[i] = new wall(gl,[-2.5+4*i,0.1,2],2,2,0.0);
-    lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-2],2,2,0.0);
+    rbrick[i] = new wall(gl,[-2.5+4*i,0.1,2.5],2,2,0.0);
+    lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-2.5],2,2,0.0);
   }
-  for(var i=0;i<20;i++){
-    console.log(eyex);
+  for(var i=0;i<10;i++){
     coins[i] = new coin(gl,[tx+0.5*i,0.2,-1.1],0.1);
   }
   player = new human(gl,[-2,0.2,0]);
-  police = new human(gl,[-2,0.2,0]);
-  //barrier = new barricade(gl,[1,0.5,1.1],0,0.2,0.5);
-  // barrier = new barricade(gl,[1,0.75,0],0,0.2,0.5);
+  police = new human(gl,[-5,0.2,0]);
+  for(var i=0;i<2;i++)
+    barrier[i] = new barricade(gl,[1+3*i,0.3,-1.1],0,0.2,0.5);
+  for(var i=0;i<2;i++)
+    barrierup[i] = new barricade(gl,[1+3*i,0.8,0],0,0.4,0.5);
   rajtrain = new train(gl,[1,0.77,1.1],1,0.75,0.5);
   // If we don't have a GL context, give up now
 
@@ -145,44 +163,28 @@ function main() {
     }
   `;
 
-  // Fragment shader program
-  const fsSourceNormal = `
-  precision mediump float;
-  varying highp vec2 vTextureCoord;
-  
-  uniform sampler2D uSampler;
-  uniform int uGrey;
-  uniform int uFlash;
-  
-  void main(void) {
-    vec4 tex =  texture2D(uSampler, vTextureCoord);
-    float sum = (tex.x+tex.y+tex.z)/3.0;
-    vec4 gray = vec4(sum,sum,sum,1);
-      gl_FragColor = tex;
-  }
-`;
-const fsSourceGray = `
+
+const fsSource = `
 precision mediump float;
 varying highp vec2 vTextureCoord;
 
 uniform sampler2D uSampler;
-uniform int uGrey;
+uniform int uGray;
 uniform int uFlash;
 
 void main(void) {
   vec4 tex =  texture2D(uSampler, vTextureCoord);
   float sum = (tex.x+tex.y+tex.z)/3.0;
   vec4 gray = vec4(sum,sum,sum,1);
+  if(uGray ==1){
     gl_FragColor = gray;
+  }  
+  else{
+    gl_FragColor = tex;
+  }
 }
 `;
-var fsSource;
-if(grayScale){
-  fsSource = fsSourceGray;  
-}  
-else{
-  fsSource = fsSourceNormal;
-}
+
   
   
   // Initialize a shader program; this is where all the lighting
@@ -203,6 +205,7 @@ else{
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
       uSampler: gl.getUniformLocation(shaderProgram, 'uSampler'),
+      uGray: gl.getUniformLocation(shaderProgram, 'uGray'),
     },
   };
 
@@ -228,18 +231,31 @@ else{
   function render(now) {
     now *= 0.001;  // convert to seconds
     const deltaTime = now - then;
+    if(rest_flag==1){
+      rest += 2*deltaTime;
+      
+      if(rest>10){
+        rest=0;
+        rest_flag=0;
+        speed = 2*speed;
+        police.moveAhead(-2);
+      }
+    }
     then = now;
     if(flag){
-      eyex +=0.1;
-      tx += 0.1;
-      player.moveAhead(0.1);
-      police.moveAhead(0.1);
+      eyex +=speed;
+      tx += speed;
+      player.moveAhead(speed);
+      police.moveAhead(speed);
     }
     if(!fly){
       
       player.moveDown();
       police.moveDown();
     }
+    coin_collision();
+    barrier_collision();
+    barrierup_collision();
     window.addEventListener('keydown',this.check,false);
     drawScene(gl, programInfo,texture, deltaTime);
 
@@ -317,13 +333,17 @@ mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
     rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
     lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
   }
-  for(var i=0;i<20;i++){
+  for(var i=1;i<coins.length;i++){
     coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
   }
   drawPlayer(player,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
-  // barrier.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['barricade']);
+  for(var i=0;i<barrier.length;i++)
+    barrier[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['barricade']);
+  for(var i=0;i<barrierup.length;i++)
+      barrierup[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['barricade']);
+  
   rajtrain.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['train']);
-  //drawPlayer(police,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
+  drawPlayer(police,gl,viewProjectionMatrix,programInfo,deltaTime,texture);
   
   
   // Tell WebGL how to pull out the positions from the position
@@ -376,7 +396,7 @@ function loadShader(gl, type, source) {
   // See if it compiled successfully
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
+    alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader)+source);
     gl.deleteShader(shader);
     return null;
   }
@@ -395,6 +415,65 @@ function drawPlayer(human,gl,viewProjectionMatrix,programInfo,deltaTime,texture)
     human.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
   }
   human.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
-  
-  
+}
+function coin_collision(){
+  for(var i=1;i<coins.length;i++){
+      
+    if(coins[i].pos[2] == player.position[2]){
+      if(coins[i].pos[1]== player.position[1]||(coins[i].pos[1]-player.position[1]==0.2 && duck)){
+        if(Math.abs(coins[i].pos[0]-player.position[0]) < 0.01)
+        {
+          player.score += 50;
+          coins.splice(i,1);
+          continue;
+        }
+      }
+     
+    }
+  }
+}
+function barrier_collision(){
+  for(var i=0;i<barrier.length;i++){
+    if(barrier[i].pos[2] == player.position[2]){
+      if(Math.abs(barrier[i].pos[1]-player.position[1])<0.15){
+        if(Math.abs(barrier[i].pos[0]-player.position[0]) < 0.01)
+        {
+          if(rest_flag){
+            flag=0;
+            console.log('game over');
+          }else{
+            console.log('collision');
+            rest_flag=1;
+            speed = speed/2;
+            police.moveAhead(2);
+          }
+          
+          
+        }
+      }
+     
+    }
+  }
+}
+function barrierup_collision(){
+  for(var i=0;i<barrierup.length;i++){
+    if(barrierup[i].pos[2] == player.position[2]){
+      if(Math.abs(barrierup[i].pos[1]-player.position[1])<0.61){
+        if(Math.abs(barrierup[i].pos[0]-player.position[0]) < 0.01)
+        {
+          if(rest_flag){
+            flag=0;
+            console.log('game over');
+          }else{
+            console.log('collision');
+            rest_flag=1;
+            speed = speed/2;
+            police.moveAhead(2);
+          }
+        
+        }
+      }
+     
+    }
+  }
 }

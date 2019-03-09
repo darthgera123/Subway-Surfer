@@ -3,6 +3,7 @@ let human = class{
         this.scale = 1;
         this.position = pos;
         this.gl = gl;
+        this.score =0;
         this.base = pos[1];
         this.angle =0;
         this.change =[0,0,0];
@@ -74,6 +75,10 @@ let human = class{
         
         this.setPosition();
 
+    }
+    newPosition(x,y,z){
+        this.position = [x,y,z];
+        this.setPosition();
     }
     setPosition(){
         this.head = new base(this.gl,[this.position[0]-this.change[0],this.position[1]+0.35-this.change[1]/2,this.position[2]],
