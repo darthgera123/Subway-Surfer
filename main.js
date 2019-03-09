@@ -8,10 +8,11 @@ var brick;
 var rbrick = [];
 var lbrick =[];
 var flag =0;
-var player;
-var point;
 var coins =[];
 var grayScale =0;
+var player,police;
+var fly=0;
+
 //generate_coins();
 main();
 var eyex,eyey,eyez,tx,ty,tz;
@@ -22,6 +23,7 @@ tx =ty=tz=0;
 //
 // Start here
 //
+
 function check(e) {
     var code = e.keyCode;
     switch (code) {
@@ -59,39 +61,59 @@ function check(e) {
         case 88: 
               flag=1;
               console.log('move');
+              
               break;
         case 90:
               flag =0;
               console.log('stop');
               break;
+        case 65:
+            player.moveLeft();
+            police.moveLeft();
+            break;//A
+        case 68:
+            player.moveRight();
+            police.moveRight();
+            break;//D
+        case 32:
+            player.moveUp();
+            police.moveUp();
+            break;//Space
+        case 83:
+            fly=0;
+            player.reset();
+            player.moveDown();
+            break;//s
+        case 87:
+            fly=1;
+            player.fly();
+            break;//W
         default: console.log(code); //Everything else
         
     }
 }
 function main() {
   eyex = -4.5;
-eyey=1.5;
-eyez=0;
-tx =ty=tz=0;
+  eyey=1.5;
+  eyez=0;
+  tx =ty=tz=0;
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-  window.addEventListener('keydown',this.check,false);
 
-        
-  b = new base(gl,[0,0,0],100,0.0,1.75);
+  b = new base(gl,[0,0,0],100,0.0,1.75,0);
   for(var i=0;i<1000;i++){
     r1[i] = new rec(gl,[-2.5+0.5*i,0.1,-1.1],0.5,0,0.5);
     r2[i] = new rec(gl,[-2.5+0.5*i,0.1, 0.0],0.5,0,0.5);
     r3[i] = new rec(gl,[-2.5+0.5*i,0.1, 1.1],0.5,0,0.5);
-    rbrick[i] = new wall(gl,[-2.5+4*i,0.1,1.75],2,2,0.0);
-    lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-1.75],2,2,0.0);
+    rbrick[i] = new wall(gl,[-2.5+4*i,0.1,2],2,2,0.0);
+    lbrick[i] = new wall(gl,[-2.5+4*i,0.1,-2],2,2,0.0);
   }
   for(var i=0;i<20;i++){
     console.log(eyex);
     coins[i] = new coin(gl,[tx+0.5*i,0.2,-1.1],0.1);
   }
-  point = new coin(gl,[0,1,0],0.1);
-  //brick = new wall(gl,[-2.5,0.1,1.75],1.5,1.5,0.0);
+  player = new human(gl,[0,0.2,0]);
+  police = new human(gl,[-2,0.2,0]);
     
   // If we don't have a GL context, give up now
 
@@ -186,7 +208,12 @@ else{
   texture['rails'] = loadTexture(gl,'new_track.jpg');
   texture['wall'] = loadTexture(gl, 'BrickWall.jpg');
   texture['coin'] = loadTexture(gl, 'yellow.jpg');
-
+  texture['head'] = loadTexture(gl, 'brown.jpg');
+  texture['body'] = loadTexture(gl, 'tbody.jpg');
+  texture['leg'] = loadTexture(gl, 'leg.jpg');
+  texture['police'] = loadTexture(gl, 'policebody.jpg');
+  texture['policeleg'] = loadTexture(gl, 'policeleg.jpg')
+  
   var then = 0;
 
   // Draw the scene repeatedly
@@ -196,9 +223,15 @@ else{
     then = now;
     if(flag){
       eyex +=0.1;
-    tx += 0.1;
-    
+      tx += 0.1;
+      player.moveAhead(0.1);
+      police.moveAhead(0.1);
     }
+    if(!fly){
+      player.moveDown();
+      police.moveDown();
+    }
+    window.addEventListener('keydown',this.check,false);
     drawScene(gl, programInfo,texture, deltaTime);
 
     requestAnimationFrame(render);
@@ -249,6 +282,7 @@ function drawScene(gl, programInfo,texture,deltaTime) {
 
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
+
   var cameraMatrix = mat4.create();
   //mat4.tanslate(outout,input,value)
   mat4.translate(cameraMatrix, cameraMatrix, [eyex, eyey, eyez]);
@@ -267,17 +301,25 @@ function drawScene(gl, programInfo,texture,deltaTime) {
 mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
 
   b.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['base']);
-  // for(var i=0;i<1000;i++){
-  //   r1[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
-  //   r2[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
-  //   r3[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
-  //   rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
-  //   lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
-  // }
+  for(var i=0;i<1000;i++){
+    r1[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+    r2[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+    r3[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['rails']);
+    rbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
+    lbrick[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['wall']);
+  }
   // for(var i=0;i<20;i++){
   //   coins[i].drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['coin']);
   // }
+  player.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
+  player.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['body']);
+  player.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+  player.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
   
+  police.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
+  police.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['police']);
+  police.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
+  police.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['policeleg']);
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute
   
@@ -336,3 +378,10 @@ function loadShader(gl, type, source) {
   return shader;
 }
 
+function drawPlayer(gl,viewProjectionMatrix,programInfo,deltaTime,texture){
+  player.head.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['head']);
+  player.body.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['body']);
+  player.left_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+  player.right_leg.drawBase(gl,viewProjectionMatrix,programInfo,deltaTime,texture['leg']);
+  
+}

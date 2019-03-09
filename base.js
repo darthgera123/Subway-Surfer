@@ -1,6 +1,7 @@
 let base = class {
-    constructor(gl, pos, height, width, depth) {
+    constructor(gl, pos, height, width, depth,angle) {
         this.positionBuffer = gl.createBuffer();
+        this.angle=angle;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
             // Front face
@@ -36,9 +37,6 @@ let base = class {
         ];
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.positions), gl.STATIC_DRAW);
         this.pos = pos;
-        // Now set up the texture coordinates for the faces.    
-        
-
   // Now set up the texture coordinates for the faces.
 
   const textureCoordBuffer = gl.createBuffer();
@@ -118,6 +116,12 @@ let base = class {
             modelViewMatrix,
             this.pos
         );
+        var PI = 3.14159265359;
+        this.angle = this.angle*PI/180;
+        mat4.rotate(modelViewMatrix,  // destination matrix
+            modelViewMatrix,  // matrix to rotate
+            this.angle,     // amount to rotate in radians
+            [0, 0, 1]);       // axis to rotate around (axis)
         {
             const numComponents = 3;
             const type = gl.FLOAT;
