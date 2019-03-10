@@ -1,7 +1,12 @@
 let train = class {
     constructor(gl, pos, height, width, depth) {
         this.positionBuffer = gl.createBuffer();
+        this.height = height;
+        this.width = width;
+        this.depth = depth;
+        this.static =0;
         this.angle=0;
+        this.uGray=0;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
             // Front face
@@ -188,14 +193,28 @@ let train = class {
         
           // Tell the shader we bound the texture to texture unit 0
           gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-        
+          gl.uniform1i(programInfo.uniformLocations.uGray, this.uGray);
           {
             const vertexCount = 36;
             const type = gl.UNSIGNED_SHORT;
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
           }
+          gl.uniform1i(programInfo.uniformLocations.uGray, 0);
         
+    }
+    retFrontFace(){
+        var temp = this.pos;
+        temp = [temp[0]-this.height,temp[1],temp[2]];
+        return temp;
+    }
+    retHeight(){
+        return this.height;
+    }
+    moveTrain(){
+        if(this.static)
+            this.pos[0] -= 0.5;
+        //this.setPosition();
     }
 
 }

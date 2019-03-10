@@ -2,6 +2,8 @@ let base = class {
     constructor(gl, pos, height, width, depth,angle) {
         this.positionBuffer = gl.createBuffer();
         this.angle=angle;
+        this.uFlash=0;
+        this.uGray=0;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
             // Front face
@@ -188,7 +190,8 @@ let base = class {
         
           // Tell the shader we bound the texture to texture unit 0
           gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-          gl.uniform1i(programInfo.uniformLocations.uGray, 0);
+          gl.uniform1i(programInfo.uniformLocations.uGray, this.uGray);
+          gl.uniform1i(programInfo.uniformLocations.uFlash, this.uFlash);
         //   gl.getUniformLocation()
         
           {
@@ -197,7 +200,8 @@ let base = class {
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
           }
-          gl.uniform1i(programInfo.uniformLocations.uGray, 0);
+            gl.uniform1i(programInfo.uniformLocations.uGray, 0);
+          gl.uniform1i(programInfo.uniformLocations.uFlash, 0);
 
     }
 

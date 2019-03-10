@@ -1,6 +1,7 @@
 let barricade = class {
     constructor(gl, pos, height, width, depth) {
         this.positionBuffer = gl.createBuffer();
+        this.uGray=0;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
             //Left Face
@@ -145,6 +146,7 @@ let barricade = class {
         
           // Tell the shader we bound the texture to texture unit 0
           gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+          gl.uniform1i(programInfo.uniformLocations.uGray, this.uGray);
         
           {
             const vertexCount = 36;
@@ -152,7 +154,7 @@ let barricade = class {
             const offset = 0;
             gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
           }
-        
+          gl.uniform1i(programInfo.uniformLocations.uGray, 0);
     }
 
 }
