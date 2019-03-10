@@ -13,6 +13,7 @@ let human = class {
         this.left_leg = new base(gl, [this.position[0], this.position[1], this.position[2] - 0.05], 0.05 * this.scale, 0.105 * this.scale, 0.025 * this.scale, this.angle);
         this.right_leg = new base(gl, [this.position[0], this.position[1], this.position[2] + 0.05], 0.05 * this.scale, 0.105 * this.scale, 0.025 * this.scale, this.angle);
         console.log(this.head.angle);
+        this.jump = 0.65;
     }
     moveLeft() {
         console.log(this.position[2]);
@@ -32,7 +33,7 @@ let human = class {
     }
     moveUp() {
         if (this.position[1] == this.base) {
-            this.position[1] += 0.65;
+            this.position[1] += this.jump;
         }
         this.setPosition();
     }

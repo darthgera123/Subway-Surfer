@@ -21,7 +21,13 @@ var rest = 0;
 var rest_flag = 0;
 var flash_time=0;
 var tflag=0;
-//generate_coins();
+var jet =[];
+var jetflag=0;
+var shoe =[];
+var shoeflag=0;
+var magnet=[];
+var magnetflag=0;
+var powerup_time=0;
 main();
 var eyex, eyey, eyez, tx, ty, tz;
 eyex = -4.5;
@@ -35,33 +41,6 @@ tx = ty = tz = 0;
 function check(e) {
   var code = e.keyCode;
   switch (code) {
-    case 37:
-      eyex -= 0.1;
-      tx -= 0.1;
-      console.log(eyex, eyey, eyez);
-      break; //Left key
-    case 38:
-      eyey += 0.1;
-
-      console.log(eyex, eyey, eyez);
-      break; //Up key
-    case 39:
-      eyex += 0.1;
-      tx += 0.1;
-      console.log(eyex, eyey, eyez);
-      break; //Right key
-    case 40:
-      eyey -= 0.1;
-      console.log(eyex, eyey, eyez);
-      break; //Down key
-    case 81: eyex = -5;
-      eyey = 2;
-      eyez = 0;
-      break;//Q key
-    case 75:
-      eyez -= 0.1;
-      console.log(eyex, eyey, eyez);
-      break; //k key
     case 76:
       //GrayScale
       toggle_gray();
@@ -73,6 +52,8 @@ function check(e) {
     case 90:
       flag = 0;
       console.log(player.score);
+      console.log(player.position);
+      console.log(jet.length);
       console.log('stop');
       break;//Z
     case 65:
@@ -105,28 +86,13 @@ function check(e) {
       //player.moveDown();
       break;//s
     case 69:
-      if(fly){
-        //eyey=1.5;
-        eyex+=1;
-        speed = speed/4;
-      }
-      fly = 0;
+      
       player.reset();
       if(duck){
         eyey=1.5
       }
       duck = 0;
       break;//E
-    case 87:
-      fly = 1;
-      if(eyey < 4.5){
-        eyey +=3;
-        eyex -=1;
-      }
-      speed = speed*4;
-      player.fly();
-      //generate_coins(gl);
-      break;//W
     default: console.log(code); //Everything else
 
   }
@@ -155,41 +121,26 @@ function main() {
   
   for(var j=0;j<800;j+=40){
     for (var i = 0; i < 5; i++) {
-      c = new coin(gl, [player.position[0]+i+j, 0.2, -1.1], 0.1);
-      c1 = new coin(gl, [player.position[0]+i+j, 0.2, 0], 0.1);
-      c2 = new coin(gl, [player.position[0]+i+j, 0.2, 1.1], 0.1);
+      c = new coin(gl, [player.position[0]+i+j+3, 0.2, -1.1], 0.1);
+      c1 = new coin(gl, [player.position[0]+i+j+3, 0.2, 0], 0.1);
+      c2 = new coin(gl, [player.position[0]+i+j+3, 0.2, 1.1], 0.1);
       coins.push(c);
       coins.push(c1);
       coins.push(c2);
     }
   }
-  for(var j =0;j<800;j+= 20){
-  for (var i = 0; i < 2; i++){
-    var lane = [-1.1, 0, 1.1];
-    var t = lane[Math.floor((Math.random() * 3))];
-    var bar = new barricade(gl, [j + 10* i, 0.3, t], 0, 0.2, 0.5);
-    barrier.push(bar);
-  }
-} 
-for(var j=0;j<800;j += 45){
-  for (var i = 0; i < 2; i++){
-    var lane = [-1.1, 0, 1.1];
-    var t = lane[Math.floor((Math.random() * 3))];
-    var bar =new barricade(gl, [15+j + 10* i, 0.8, t], 0, 0.4, 0.5);
-    barrierup.push(bar);
-  }
-}  
+  drawLow(gl);
+  drawHigh(gl);
+  drawTrain(gl);
   
-  for (var j = 0; j < 800; j += 40) {
-    for (var i = 1; i < 3; i++) {
-      var lane = [-1.1, 0, 1.1];
-      var t = lane[Math.floor((Math.random() * 3))];
-      var q = new train(gl, [10 + j + 1.5 * i, 0.77, t], 1, 0.75, 0.5);
-      if (i == 2)
-        q.static = 1  ;
-      rajtrain.push(q);
-    }
-  }  
+  for(var j=0;j<800;j+=40){
+      c = new barricade(gl, [j , 0.3, -1.1], 0, 0.2, 0.2);
+      c1 = new barricade(gl, [j , 0.3, 0], 0, 0.2, 0.2);
+      c2 = new barricade(gl, [j , 0.3, 1.1], 0, 0.2, 0.2);
+      jet.push(c);
+      shoe.push(c1);
+      magnet.push(c2);
+  }
   // If we don't have a GL context, give up now
 
   if (!gl) {
@@ -280,6 +231,9 @@ void main(void) {
   texture['barricade'] = loadTexture(gl, 'barricade.jpg');
   texture['train'] = loadTexture(gl, 'train.jpg');
   texture['moving'] = loadTexture(gl, 'movingtrain.png');
+  texture['jetpack'] = loadTexture(gl, 'jetpack.jpg');
+  texture['magnet'] = loadTexture(gl, 'magnet.png');
+  texture['shoe'] = loadTexture(gl, 'shoe.jpg');
 
   var then = 0;
 
@@ -289,6 +243,43 @@ void main(void) {
     const deltaTime = now - then;
     flash_time += 10*deltaTime;
     //console.log(flash_time);
+    if(player.position[0]==1000){
+      flag=0;
+      document.getElementById('gameover').innerHTML ="Gameover thanks for playing"
+    }
+    if(jetflag==1){
+      powerup_time += 5*deltaTime;
+      if(powerup_time > 20){
+        jetflag=0;
+        powerup_time=0;
+        if(fly){
+          //eyey=1.5;
+          eyex+=1;
+          speed = speed/4;
+        }
+        fly = 0;
+        player.reset();
+        document.getElementById('powerup').innerHTML = "";  
+      }
+    }
+    if(shoeflag==1){
+      powerup_time += 5*deltaTime;
+      if(powerup_time > 100){
+        shoeflag=0;
+        powerup_time=0;
+        player.jump /=2;
+        document.getElementById('powerup').innerHTML = "";      
+      }
+    }
+    if(magnetflag==1){
+      powerup_time += 5*deltaTime;
+      magnet_coins();
+      if(powerup_time > 100){
+        magnetflag=0;
+        powerup_time=0;
+        document.getElementById('powerup').innerHTML = "";  
+      }
+    }
     if (rest_flag == 1) {
       rest += 2 * deltaTime;
 
@@ -319,13 +310,20 @@ void main(void) {
     if(flash_time > 50){
       flash_time=0;
       flash();
+    }if(!magnetflag){
+      coin_collision();
     }
-    coin_collision();
+    
     barrier_collision();
     barrierup_collision();
+    shoe_collision();
+    jet_collision();
+    magnet_collision();
     train_top();
     train_collision();
     move_train();
+    clear();
+    
     window.addEventListener('keydown', this.check, false);
     drawScene(gl, programInfo, texture, deltaTime);
     document.getElementById('score').innerHTML = player.score;
@@ -418,6 +416,12 @@ function drawScene(gl, programInfo, texture, deltaTime) {
     rajtrain[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['train']);
     // rajtrain[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, tex);
   }
+  for (var i = 0; i < jet.length; i++)
+    jet[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['jetpack']);
+  for (var i = 0; i < shoe.length; i++)
+    shoe[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['shoe']);
+  for (var i = 0; i < magnet.length; i++)
+    magnet[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['magnet']);
   drawPlayer(police, gl, viewProjectionMatrix, programInfo, deltaTime, texture);
 
 
@@ -509,11 +513,11 @@ function coin_collision() {
 function barrier_collision() {
   for (var i = 0; i < barrier.length; i++) {
     if (barrier[i].pos[2] == player.position[2]) {
-      if (Math.abs(barrier[i].pos[1] - player.position[1]) < 0.15) {
+      if (Math.abs(barrier[i].pos[1] - player.position[1]) < 0.35) {
         if (Math.abs(barrier[i].pos[0] - player.position[0]) < 0.01) {
           if (rest_flag) {
             flag = 0;
-            console.log('game over');
+            document.getElementById('gameover').innerHTML ="Gameover thanks for playing"
           } else {
             console.log('collision');
             rest_flag = 1;
@@ -533,7 +537,7 @@ function barrierup_collision() {
         if (Math.abs(barrierup[i].pos[0] - player.position[0]) < 0.01) {
           if (rest_flag) {
             flag = 0;
-            console.log('game over');
+            document.getElementById('gameover').innerHTML ="Gameover thanks for playing"
           } else {
             console.log('collision');
             rest_flag = 1;
@@ -546,6 +550,72 @@ function barrierup_collision() {
 
     }
   }
+}
+function jet_collision(){
+  for (var i = 0; i < jet.length; i++) {
+    if (jet[i].pos[2] == player.position[2]) {
+      if (Math.abs(jet[i].pos[1] - player.position[1]) < 0.31) {
+        if (Math.abs(jet[i].pos[0] - player.position[0]) < 0.01) {
+          jetflag =1;
+          fly = 1;
+        if(eyey < 4.5){
+          eyey +=3;
+          eyex -=1;
+        }
+        speed = speed*4;
+        player.fly();
+        document.getElementById('powerup').innerHTML = "Jetpack";  
+          jet.splice(i,1);
+          continue;
+        }
+      }
+
+    }
+  }
+}
+function shoe_collision(){
+  for (var i = 0; i < shoe.length; i++) {
+    if (shoe[i].pos[2] == player.position[2]) {
+      if (Math.abs(shoe[i].pos[1] - player.position[1]) < 0.31) {
+        if (Math.abs(shoe[i].pos[0] - player.position[0]) < 0.01) {
+          shoeflag =1;
+          player.jump *= 2;
+          shoe.splice(i,1);
+          document.getElementById('powerup').innerHTML = "Double Jump";  
+          continue;
+        }
+      }
+
+    }
+  }
+}
+function magnet_collision(){
+  for (var i = 0; i < magnet.length; i++) {
+    if (magnet[i].pos[2] == player.position[2]) {
+      if (Math.abs(magnet[i].pos[1] - player.position[1]) < 0.31) {
+        if (Math.abs(magnet[i].pos[0] - player.position[0]) < 0.01) {
+          magnetflag =1;
+          magnet.splice(i,1);
+          document.getElementById('powerup').innerHTML = "Magnet";  
+          continue;
+        }
+      }
+
+    }
+  }
+}
+function magnet_coins(){
+  for (var i = 0; i < coins.length; i++) {
+      if (coins[i].pos[1] == player.position[1] || (coins[i].pos[1] - player.position[1] == 0.2 && duck)) {
+        if (Math.abs(coins[i].pos[0] - player.position[0]) < 0.01) {
+          player.score += 50;
+          coins.splice(i, 1);
+          continue;
+        }
+      }
+
+    }
+
 }
 function train_collision() {
   for (var i = 0; i < rajtrain.length; i++) {
@@ -560,7 +630,7 @@ function train_collision() {
             rajtrain[i].static =0;
           }
           flag = 0;
-          console.log('game over');
+          document.getElementById('gameover').innerHTML ="Gameover thanks for playing"
           police.moveAhead(2);
           
         }
@@ -638,4 +708,79 @@ function generate_coins(gl){
     coins.push(c);
   }
   
+}
+function drawTrain(gl){
+  for (var j = 0; j < 800; j += 40) {
+    for (var i = 1; i < 3; i++) {
+      var lane = [-1.1, 0, 1.1];
+      var t = lane[Math.floor((Math.random() * 3))];
+      var q = new train(gl, [10 + j + 1.5 * i, 0.77, t], 1, 0.75, 0.5);
+      if (i == 2)
+        q.static = 1  ;
+      rajtrain.push(q);
+    }
+  } 
+}
+function drawLow(gl){
+  for(var j =0;j<800;j+= 20){
+    for (var i = 0; i < 2; i++){
+      var lane = [-1.1, 0, 1.1];
+      var t = lane[Math.floor((Math.random() * 3))];
+      var bar = new barricade(gl, [j + 10* i+8, 0.3, t], 0, 0.2, 0.5);
+      barrier.push(bar);
+    }
+  }
+}
+function drawHigh(gl){
+  for(var j=0;j<800;j += 45){
+    for (var i = 0; i < 2; i++){
+      var lane = [-1.1, 0, 1.1];
+      var t = lane[Math.floor((Math.random() * 3))];
+      var bar =new barricade(gl, [15+j + 10* i+8, 0.8, t], 0, 0.4, 0.5);
+      barrierup.push(bar);
+    }
+  }  
+}
+function clear(){
+  var p = player.position[0];
+  for (var i = 0; i < jet.length; i++){
+    if(p-jet[i].pos[0] > 4){
+      jet.splice(i,1);
+      continue;
+    }
+  }
+  for (var i = 0; i < shoe.length; i++){
+    if(p-shoe[i].pos[0] > 4){
+      shoe.splice(i,1);
+      continue;
+    }
+  }
+  for (var i = 0; i < magnet.length; i++){
+    if(p-magnet[i].pos[0] > 4){
+      magnet.splice(i,1);
+      continue;
+    }
+  }
+  for (var i = 0; i < barrier.length; i++){
+    if(p-barrier[i].pos[0] > 4){
+      barrier.splice(i,1);
+      continue;
+    }
+  }for (var i = 0; i < barrierup.length; i++){
+    if(p-barrierup[i].pos[0] > 4){
+      barrierup.splice(i,1);
+      continue;
+    }
+  }for (var i = 0; i < rajtrain.length; i++){
+    if(p-rajtrain[i].pos[0] > 4){
+      rajtrain.splice(i,1);
+      continue;
+    }
+  }for (var i = 0; i < coins.length; i++){
+    if(p-coins[i].pos[0] > 4){
+      coins.splice(i,1);
+      continue;
+    }
+  }
+    
 }

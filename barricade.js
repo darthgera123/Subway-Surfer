@@ -2,6 +2,7 @@ let barricade = class {
     constructor(gl, pos, height, width, depth) {
         this.positionBuffer = gl.createBuffer();
         this.uGray=0;
+        this.powerup;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         this.positions = [
             //Left Face
