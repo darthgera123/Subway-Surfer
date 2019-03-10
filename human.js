@@ -38,7 +38,6 @@ let human = class {
     }
     moveDown() {
         if (this.position[1] > this.base) {
-            console.log(this.position[1]);
             this.position[1] -= 0.025;
             if (this.position[1] < this.base) {
                 this.position[1] = this.base;

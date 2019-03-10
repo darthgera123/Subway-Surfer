@@ -20,6 +20,7 @@ var speed = 0.2;
 var rest = 0;
 var rest_flag = 0;
 var flash_time=0;
+var tflag=0;
 //generate_coins();
 main();
 var eyex, eyey, eyez, tx, ty, tz;
@@ -71,9 +72,6 @@ function check(e) {
       break;//X
     case 90:
       flag = 0;
-      console.log(player.position);
-      console.log(coins[0].pos);
-      console.log(coins.length);
       console.log(player.score);
       console.log('stop');
       break;//Z
@@ -108,8 +106,9 @@ function check(e) {
       break;//s
     case 69:
       if(fly){
-        eyey=1.5;
+        //eyey=1.5;
         eyex+=1;
+        speed = speed/4;
       }
       fly = 0;
       player.reset();
@@ -124,14 +123,16 @@ function check(e) {
         eyey +=3;
         eyex -=1;
       }
-      
+      speed = speed*4;
       player.fly();
+      //generate_coins(gl);
       break;//W
     default: console.log(code); //Everything else
 
   }
 }
 function main() {
+  
   eyex = -4.5;
   eyey = 1.5;
   eyez = 0;
@@ -139,7 +140,7 @@ function main() {
   const canvas = document.querySelector('#glcanvas');
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
-  b = new base(gl, [0, 0, 0], 100, 0.0, 2.5, 0);
+  b = new base(gl, [0, 0, 0], 1000, 0.0, 2.5, 0);
   for (var i = 0; i < 1000; i++) {
     r1[i] = new rec(gl, [-2.5 + 0.5 * i, 0.1, -1.1], 0.5, 0, 0.5);
     r2[i] = new rec(gl, [-2.5 + 0.5 * i, 0.1, 0.0], 0.5, 0, 0.5);
@@ -147,24 +148,48 @@ function main() {
     rbrick[i] = new wall(gl, [-2.5 + 4 * i, 0.1, 2.5], 2, 2, 0.0);
     lbrick[i] = new wall(gl, [-2.5 + 4 * i, 0.1, -2.5], 2, 2, 0.0);
   }
-  for (var i = 0; i < 5; i++) {
-    coins[i] = new coin(gl, [0 + 1* i, 0.2, 0], 0.1);
-  }
-  for (var i = 0; i < 20; i++) {
-    c = new coin(gl, [0 + 1 * i, 2.2, 0], 0.1);
-    coins.push(c);
-  }
+  
+  
   player = new human(gl, [-2, 0.2, 0]);
   police = new human(gl, [-5, 0.2, 0]);
-  for (var i = 0; i < 2; i++)
-    barrier[i] = new barricade(gl, [1 + 3 * i, 0.3, -1.1], 0, 0.2, 0.5);
-  for (var i = 0; i < 2; i++)
-    barrierup[i] = new barricade(gl, [1 + 3 * i, 0.8, 0], 0, 0.4, 0.5);
-  for (var i = 0; i < 5; i++){
-    rajtrain[i] = new train(gl, [10, 0.77, 0], 1, 0.75, 0.5);
-    rajtrain[i].static =1;
+  
+  for(var j=0;j<800;j+=40){
+    for (var i = 0; i < 5; i++) {
+      c = new coin(gl, [player.position[0]+i+j, 0.2, -1.1], 0.1);
+      c1 = new coin(gl, [player.position[0]+i+j, 0.2, 0], 0.1);
+      c2 = new coin(gl, [player.position[0]+i+j, 0.2, 1.1], 0.1);
+      coins.push(c);
+      coins.push(c1);
+      coins.push(c2);
+    }
   }
-    
+  for(var j =0;j<800;j+= 20){
+  for (var i = 0; i < 2; i++){
+    var lane = [-1.1, 0, 1.1];
+    var t = lane[Math.floor((Math.random() * 3))];
+    var bar = new barricade(gl, [j + 10* i, 0.3, t], 0, 0.2, 0.5);
+    barrier.push(bar);
+  }
+} 
+for(var j=0;j<800;j += 45){
+  for (var i = 0; i < 2; i++){
+    var lane = [-1.1, 0, 1.1];
+    var t = lane[Math.floor((Math.random() * 3))];
+    var bar =new barricade(gl, [15+j + 10* i, 0.8, t], 0, 0.4, 0.5);
+    barrierup.push(bar);
+  }
+}  
+  
+  for (var j = 0; j < 800; j += 40) {
+    for (var i = 1; i < 3; i++) {
+      var lane = [-1.1, 0, 1.1];
+      var t = lane[Math.floor((Math.random() * 3))];
+      var q = new train(gl, [10 + j + 1.5 * i, 0.77, t], 1, 0.75, 0.5);
+      if (i == 2)
+        q.static = 1  ;
+      rajtrain.push(q);
+    }
+  }  
   // If we don't have a GL context, give up now
 
   if (!gl) {
@@ -254,6 +279,7 @@ void main(void) {
   texture['policeleg'] = loadTexture(gl, 'policeleg.jpg');
   texture['barricade'] = loadTexture(gl, 'barricade.jpg');
   texture['train'] = loadTexture(gl, 'train.jpg');
+  texture['moving'] = loadTexture(gl, 'movingtrain.png');
 
   var then = 0;
 
@@ -270,7 +296,7 @@ void main(void) {
         rest = 0;
         rest_flag = 0;
         speed = 2 * speed;
-        police.moveAhead(-2);
+        police.moveAhead(-2.5);
       }
     }
     then = now;
@@ -281,9 +307,14 @@ void main(void) {
       police.moveAhead(speed);
     }
     if (!fly) {
-
+      if(eyey > 1.5){
+        eyey -= 0.04;
+      }
       player.moveDown();
       police.moveDown();
+      
+    }else if(fly){
+      //generate_coins(gl);
     }
     if(flash_time > 50){
       flash_time=0;
@@ -292,11 +323,12 @@ void main(void) {
     coin_collision();
     barrier_collision();
     barrierup_collision();
+    train_top();
     train_collision();
-    //move_train();
+    move_train();
     window.addEventListener('keydown', this.check, false);
     drawScene(gl, programInfo, texture, deltaTime);
-
+    document.getElementById('score').innerHTML = player.score;
     requestAnimationFrame(render);
   }
   requestAnimationFrame(render);
@@ -379,8 +411,13 @@ function drawScene(gl, programInfo, texture, deltaTime) {
     barrier[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['barricade']);
   for (var i = 0; i < barrierup.length; i++)
     barrierup[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['barricade']);
-  for (var i = 0; i < rajtrain.length; i++)
+  for (var i = 0; i < rajtrain.length; i++) {
+    if (rajtrain[i].static)
+    rajtrain[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['moving']);
+    else
     rajtrain[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, texture['train']);
+    // rajtrain[i].drawBase(gl, viewProjectionMatrix, programInfo, deltaTime, tex);
+  }
   drawPlayer(police, gl, viewProjectionMatrix, programInfo, deltaTime, texture);
 
 
@@ -516,7 +553,7 @@ function train_collision() {
     var height = rajtrain[i].retHeight();
     //sideways collision
     if (train[2] == player.position[2]) {
-      if (Math.abs(train[1] - player.position[1]) < 0.8) {
+      if (Math.abs(train[1] - player.position[1]) < 1) {
         if (Math.abs(train[0] - player.position[0]) < 0.01) {
           if(rajtrain[i].static)
           {
@@ -529,6 +566,29 @@ function train_collision() {
         }
 
       }
+      
+    }
+  }
+}
+function train_top(){
+  for (var i = 0; i < rajtrain.length; i++) {
+    var train = rajtrain[i].retFrontFace();
+    var height = rajtrain[i].retHeight();
+    var width = rajtrain[i].width;
+    //sideways collision
+    if (train[2] == player.position[2]) {
+      // console.log('train'+i);
+      if (Math.abs(rajtrain[i].pos[0]-player.position[0]) < height) {
+        // console.log('within range'+i);  
+        if (Math.abs(rajtrain[i].pos[1]+width - player.position[1]) < 0.1) {
+          //console.log('stand on train')
+          tflag=1;
+        }else{
+          tflag=0;
+        }
+
+      }else
+        tflag=0;
       
     }
   }
@@ -571,4 +631,11 @@ function toggle_gray(){
         barrierup[i].uGray = (barrierup[i].uGray==0)?1:0;
       }
       player.grayScale();
+}
+function generate_coins(gl){
+  for (var i = 0; i < 2; i++) {
+    c = new coin(gl, [player.position[0]+i, 2.2, player.position[2]], 0.1);
+    coins.push(c);
+  }
+  
 }
